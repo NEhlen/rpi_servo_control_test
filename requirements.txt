@@ -1,1 +1,7 @@
 RPI.GPIO
+numpy
+pillow
+transformers
+torch
+matplotlib
+opencv-python
