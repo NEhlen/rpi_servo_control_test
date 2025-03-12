@@ -2,15 +2,17 @@ import cv2
 from PIL import Image
 from transformers import CLIPSegProcessor, CLIPSegForImageSegmentation
 from PIL import Image
-import requests
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 
 
 def get_image_from_webcam():
     cap = cv2.VideoCapture(0)
 
+    # ret, frame = cap.read()
+    # time.sleep(0.5)
     ret, frame = cap.read()
     cap.release()
 
@@ -59,7 +61,7 @@ def get_look_direction(obect_to_look_at: str):
     # threshold the mask
     bmask = mask > threshold
     # zero out values below the threshold
-    mask[mask < threshold] = 0
+    mask[~bmask] = 0
 
     # determine from which function to choose in order to look at the object:
     # look right, look left, look up, look down, look center
@@ -69,11 +71,12 @@ def get_look_direction(obect_to_look_at: str):
 
     fig, ax = plt.subplots()
     ax.imshow(image)
+    mask[~bmask] = np.nan
     ax.imshow(mask, alpha=0.5, cmap="jet")
 
-    plt.scatter(np.mean(px), np.mean(py), c="y", s=100)
+    ax.scatter(np.mean(px), np.mean(py), c="y", s=100)
 
-    plt.savefig("test.png")
+    fig.savefig("test.png")
 
     hor = ""
     ver = ""
