@@ -2,7 +2,7 @@
 import RPi.GPIO as GPIO  # Imports the standard Raspberry Pi GPIO library
 from time import sleep  # Imports sleep (aka wait or pause) into the program
 import numpy as np
-from interpret_webcam import get_look_direction
+
 
 GPIO.setmode(GPIO.BOARD)  # Sets the pin numbering system to use the physical layout
 
@@ -115,43 +115,72 @@ def look_down_right(cur_angle_hor, cur_angle_ver):
     return 80, 140
 
 
-# cah, cav = look_up_right(90, 90)
-# sleep(1)
-# cah, cav = look_center(cah, cav)
-# sleep(1)
-# cah, cav = look_down_right(cah, cav)
-# sleep(1)
-# cah, cav = look_down_left(cah, cav)
-# sleep(1)
-# cah, cav = look_center(cah, cav)
-# sleep(1)
+def clip_mode():
+    from interpret_webcam import get_look_direction
 
-cah, cav = 90, 90
-horizontal, vertical = get_look_direction("face")
-print("looking", horizontal, vertical)
-if horizontal == "right":
-    if vertical == "up":
-        cah, cav = look_up_right(cah, cav)
-    elif vertical == "down":
-        cah, cav = look_down_right(cah, cav)
-    else:
-        cah = look_right(cah)
+    cah, cav = 90, 90
+    look_for = ""
+    while True:
+        look_for = input("What do you want to look for? ")
+        if look_for == "exit":
+            break
+        horizontal, vertical = get_look_direction(look_for)
+        print("looking", horizontal, vertical)
+        if horizontal == "right":
+            if vertical == "up":
+                cah, cav = look_up_right(cah, cav)
+            elif vertical == "down":
+                cah, cav = look_down_right(cah, cav)
+            else:
+                cah = look_right(cah)
 
-elif horizontal == "left":
-    if vertical == "up":
-        cah, cav = look_up_left(cah, cav)
-    elif vertical == "down":
-        cah, cav = look_down_left(cah, cav)
-    else:
-        cah = look_left(cah)
+        elif horizontal == "left":
+            if vertical == "up":
+                cah, cav = look_up_left(cah, cav)
+            elif vertical == "down":
+                cah, cav = look_down_left(cah, cav)
+            else:
+                cah = look_left(cah)
 
+        else:
+            if vertical == "up":
+                cav = look_up(cav)
+            elif vertical == "down":
+                cav = look_down(cav)
+            else:
+                cah, cav = look_center(cah, cav)
+
+        ph.ChangeDutyCycle(0)
+        pv.ChangeDutyCycle(0)
+
+
+def face_detection_mode():
+    from face_tracking import detect_face
+
+    cah, cav = 90, 90
+    while True:
+        px, py = detect_face()
+
+        if px is not None and py is not None:
+            pxa = (1 - px) * (150 - 45) + 45
+            pya = py * (130 - 60) + 60
+            print(pxa, pya)
+            angle_interpolation2d(cah, pxa, ph, cav, pya, pv)
+            cah = pxa
+            cav = pya
+
+        ph.ChangeDutyCycle(0)
+        pv.ChangeDutyCycle(0)
+
+
+mode = input("Choose Mode [CLIP, FACE]")
+if mode.lower() == "clip":
+
+    clip_mode()
+elif mode.lower() == "face":
+    face_detection_mode()
 else:
-    if vertical == "up":
-        cav = look_up(cav)
-    elif vertical == "down":
-        cav = look_down(cav)
-    else:
-        cah, cav = look_center(cah, cav)
+    print("Invalid mode")
 
 # Clean up everything
 ph.stop()  # At the end of the program, stop the PWM
