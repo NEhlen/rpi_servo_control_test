@@ -1,124 +1,97 @@
 # Set up libraries and overall settings
-import RPi.GPIO as GPIO  # Imports the standard Raspberry Pi GPIO library
 from time import sleep  # Imports sleep (aka wait or pause) into the program
 import numpy as np
+from adafruit_servokit import ServoKit, _Servo
 
+kit = ServoKit(channels=16)
 
-GPIO.setmode(GPIO.BOARD)  # Sets the pin numbering system to use the physical layout
+horizontal_min = 45
+horizontal_max = 130
+horizontal_center = 90
 
-# Set up pin 11 for PWM
-GPIO.setup(11, GPIO.OUT)  # Sets up pin 11 to an output (instead of an input)
-GPIO.setup(12, GPIO.OUT)  # Sets up pin 12 to an output (instead of an input)
-ph = GPIO.PWM(11, 50)  # Sets up pin 11 as a PWM pin
-pv = GPIO.PWM(12, 50)  # Sets up pin 12 as a PWM pin
+vertical_min = 60
+vertical_max = 145
+vertical_center = 105
 
-ph.start(0)
-pv.start(0)
+ph = kit.servo[0]
+pv = kit.servo[1]
 
-back_pwm = 2
-front_pwm = 12
-
-
-def angle_to_duty_cyle(angle: float):
-    return (angle / 180) * (front_pwm - back_pwm) + back_pwm
-
-
-def duty_cycle_to_angle(duty_cycle: float):
-    return (duty_cycle - back_pwm) / (front_pwm - back_pwm) * 180
-
-
-# interpolates between two angles with a cosine like shape so that it
-# starts slow and ends slow but is quick in-between
-def angle_interpolation(
-    start_angle: float, end_angle: float, p: GPIO.PWM, steps: int = 50
-):
-    start_duty_cycle = angle_to_duty_cyle(start_angle)
-    end_duty_cycle = angle_to_duty_cyle(end_angle)
-    for i in np.linspace(0, 1, steps):
-        interpolated_duty_cycle = (
-            start_duty_cycle
-            + (end_duty_cycle - start_duty_cycle) * (1 - np.cos(i * np.pi)) / 2
-        )
-        p.ChangeDutyCycle(interpolated_duty_cycle)
-        sleep(0.01)
+ph.angle = 90
+pv.angle = 90
 
 
 def angle_interpolation2d(
     start_angle_hor: float,
     end_angle_hor: float,
-    ph: GPIO.PWM,
+    ph: _Servo,
     start_angle_ver: float,
     end_angle_ver: float,
-    pv: GPIO.PWM,
+    pv: _Servo,
     steps: int = 50,
 ):
-    start_duty_cycle_hor = angle_to_duty_cyle(start_angle_hor)
-    end_duty_cycle_hor = angle_to_duty_cyle(end_angle_hor)
-    start_duty_cycle_ver = angle_to_duty_cyle(start_angle_ver)
-    end_duty_cycle_ver = angle_to_duty_cyle(end_angle_ver)
     for i in np.linspace(0, 1, steps):
-        interpolated_duty_cycle_hor = (
-            start_duty_cycle_hor
-            + (end_duty_cycle_hor - start_duty_cycle_hor) * (1 - np.cos(i * np.pi)) / 2
+        interpolated_angle_hor = (
+            start_angle_hor
+            + (end_angle_hor - start_angle_hor) * (1 - np.cos(i * np.pi)) / 2
         )
-        interpolated_duty_cycle_ver = (
-            start_duty_cycle_ver
-            + (end_duty_cycle_ver - start_duty_cycle_ver) * (1 - np.cos(i * np.pi)) / 2
+        interpolated_angle_ver = (
+            start_angle_ver
+            + (end_angle_ver - start_angle_ver) * (1 - np.cos(i * np.pi)) / 2
         )
-        ph.ChangeDutyCycle(interpolated_duty_cycle_hor)
-        pv.ChangeDutyCycle(interpolated_duty_cycle_ver)
+        ph.angle = interpolated_angle_hor
+        pv.angle = interpolated_angle_ver
         sleep(0.01)
 
 
 def look_up(cur_angle_hor, cur_angle_ver):
     angle_interpolation2d(cur_angle_hor, 90, ph, cur_angle_ver, 60, pv)
-    return 90, 60
+    return horizontal_center, vertical_min
 
 
 def look_down(cur_angle_hor, cur_angle_ver):
     angle_interpolation2d(cur_angle_hor, 90, ph, cur_angle_ver, 130, pv)
-    return 90, 130
+    return horizontal_center, vertical_max
 
 
 def look_right(cur_angle_hor, cur_angle_ver):
     angle_interpolation2d(cur_angle_hor, 65, ph, cur_angle_ver, 100, pv)
-    return 65, 100
+    return horizontal_min, vertical_center
 
 
 def look_left(cur_angle_hor, cur_angle_ver):
     angle_interpolation2d(cur_angle_hor, 130, ph, cur_angle_ver, 100, pv)
-    return 130, 100
+    return horizontal_max, vertical_center
 
 
 def look_center(cur_angle_hor, cur_angle_ver):
     angle_interpolation2d(cur_angle_hor, 90, ph, cur_angle_ver, 100, pv)
-    return 90, 100
+    return horizontal_center, vertical_center
 
 
 def look_up_left(cur_angle_hor, cur_angle_ver):
     angle_interpolation2d(cur_angle_hor, 130, ph, cur_angle_ver, 70, pv)
-    return 130, 70
+    return horizontal_max, vertical_min
 
 
 def look_up_right(cur_angle_hor, cur_angle_ver):
     angle_interpolation2d(cur_angle_hor, 70, ph, cur_angle_ver, 80, pv)
-    return 70, 80
+    return horizontal_min, vertical_min
 
 
 def look_down_left(cur_angle_hor, cur_angle_ver):
     angle_interpolation2d(cur_angle_hor, 130, ph, cur_angle_ver, 130, pv)
-    return 130, 130
+    return horizontal_max, vertical_max
 
 
 def look_down_right(cur_angle_hor, cur_angle_ver):
     angle_interpolation2d(cur_angle_hor, 80, ph, cur_angle_ver, 140, pv)
-    return 80, 140
+    return horizontal_min, vertical_max
 
 
 def clip_mode():
     from interpret_webcam import get_look_direction
 
-    cah, cav = 90, 90
+    cah, cav = horizontal_center, vertical_center
     look_for = ""
     while True:
         look_for = input("What do you want to look for? ")
@@ -150,33 +123,37 @@ def clip_mode():
             else:
                 cah, cav = look_center(cah, cav)
 
-        ph.ChangeDutyCycle(0)
-        pv.ChangeDutyCycle(0)
+        ph.angle = None
+        pv.angle = None
 
 
 def face_detection_mode(plot: bool = False):
     from face_tracking import detect_face
 
-    cah, cav = 90, 90
+    cah, cav = horizontal_center, vertical_center
     while True:
         px, py = detect_face(plot)
 
         if px is not None and py is not None:
-            pxa = (1 - px) * (150 - 45) + 45
-            pya = py * (130 - 60) + 60
+            px = 1 / (1 + np.exp(-10 * (px - 0.5)))
+            py = 1 / (1 + np.exp(-15 * (py - 0.3)))
+            print(px, py)
+            pxa = (1 - px) * (horizontal_max - horizontal_min) + horizontal_min
+            pya = py * (vertical_max - vertical_min) + vertical_min
             print(pxa, pya)
             angle_interpolation2d(cah, pxa, ph, cav, pya, pv)
             cah = pxa
             cav = pya
 
-        ph.ChangeDutyCycle(0)
-        pv.ChangeDutyCycle(0)
+        ph.angle = None
+        pv.angle = None
 
 
 def random_movement_mode():
-    cah, cav = 90, 90
+    cah, cav = horizontal_center, vertical_center
     while True:
-        new_cah, new_cav = np.random.randint(50, 130), np.random.randint(70, 110)
+        new_cah = np.random.randint(horizontal_min, horizontal_max)
+        new_cav = np.random.randint(vertical_min, vertical_max)
         angle_interpolation2d(
             cah,
             new_cah,
@@ -188,8 +165,8 @@ def random_movement_mode():
         )
         cah = new_cah
         cav = new_cav
-        ph.ChangeDutyCycle(0)
-        pv.ChangeDutyCycle(0)
+        ph.angle = None
+        pv.angle = None
         sleep(np.random.random() * 0.5)
 
 
@@ -207,6 +184,5 @@ else:
     print("Invalid mode")
 
 # Clean up everything
-ph.stop()  # At the end of the program, stop the PWM
-pv.stop()
-GPIO.cleanup()  # Resets the GPIO pins back to defaults
+ph.angle = None  # At the end of the program, stop the PWM
+pv.angle = None

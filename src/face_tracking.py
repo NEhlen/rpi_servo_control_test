@@ -13,6 +13,7 @@ face_cascade = cv2.CascadeClassifier(
 # Open the webcam (0 for default camera)
 def detect_face(plot=False):
     cap = cv2.VideoCapture(0)
+    cap.set(cv2.CAP_PROP_EXPOSURE, 40)
     ret, frame = cap.read()
     if not ret:
         print("Failed to grab frame")
@@ -69,4 +70,4 @@ def detect_face(plot=False):
 
 if __name__ == "__main__":
     while True:
-        detect_face(plot=False)
+        detect_face(plot=True)

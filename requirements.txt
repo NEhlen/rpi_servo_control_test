@@ -5,3 +5,4 @@ transformers
 torch
 matplotlib
 opencv-python
+adafruit-circuitpython-servokit
