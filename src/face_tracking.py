@@ -25,23 +25,23 @@ def detect_face(plot=False):
     # Detect faces (adjust scaleFactor and minNeighbors as needed)
     try:
         faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5)
-        image = Image.fromarray(frame[::4, ::4])
+
         if plot:
+            image = Image.fromarray(frame[::4, ::4])
             plt.figure()
             plt.imshow(image)
-        # Draw rectangles around detected faces
-        for x, y, w, h in faces:
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+            for x, y, w, h in faces:
+                # cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
-            # print(
-            #     x + 0.5 * w,
-            #     y + 0.5 * h,
-            #     (x + w / 2) / gray.shape[1],
-            #     (y + h / 2) / gray.shape[0],
-            #     gray.shape,
-            # )
-            # Display the frame with detections (optional)
-            if plot:
+                # print(
+                #     x + 0.5 * w,
+                #     y + 0.5 * h,
+                #     (x + w / 2) / gray.shape[1],
+                #     (y + h / 2) / gray.shape[0],
+                #     gray.shape,
+                # )
+                # Display the frame with detections (optional)
+
                 plt.gca().add_patch(
                     patches.Rectangle(
                         (x / 4, y / 4),
@@ -52,10 +52,9 @@ def detect_face(plot=False):
                         facecolor="none",
                     )
                 )
-
-        if plot:
             plt.savefig("test_face.png")
             plt.close()
+        x, y, w, h = faces[-1]
         return (x + w / 2) / gray.shape[1], (y + h / 2) / gray.shape[0]
     except Exception as e:
         print(e)
