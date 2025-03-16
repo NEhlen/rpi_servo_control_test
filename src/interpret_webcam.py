@@ -74,10 +74,10 @@ def get_look_direction(obect_to_look_at: str):
     mask[~bmask] = np.nan
     ax.imshow(mask, alpha=0.5, cmap="jet")
 
-    ax.scatter(np.mean(px), np.mean(py), c="y", s=100)
+    ax.scatter(np.mean(px), np.mean(py), c="r", s=100)
 
     fig.savefig("test.png")
-
+    plt.close()
     hor = ""
     ver = ""
     if len(px) == 0:
