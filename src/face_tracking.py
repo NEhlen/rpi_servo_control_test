@@ -9,6 +9,12 @@ face_cascade = cv2.CascadeClassifier(
     cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
 )
 
+cap = cv2.VideoCapture(0)
+cap.set(cv2.CAP_PROP_EXPOSURE, 40)
+for _ in range(10):
+    cap.read()
+cap.release()
+
 
 # Open the webcam (0 for default camera)
 def detect_face(plot=False):
