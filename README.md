@@ -8,7 +8,8 @@ The eye is based on a heavily modified version of the [animatronic eye on printa
 
 To run the project please run `src/look_around_servokit.py`.
 
-![Video](data/video/demo.mp4)
+Video:
+data/video/demo.mp4
 
 
 ## Build-Details
